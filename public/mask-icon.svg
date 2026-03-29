@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#1a1a2e"/>
+  <g transform="translate(64, 64)">
+    <!-- Checkerboard pattern -->
+    <rect x="0" y="0" width="96" height="96" fill="#8b4513"/>
+    <rect x="96" y="0" width="96" height="96" fill="#deb887"/>
+    <rect x="192" y="0" width="96" height="96" fill="#8b4513"/>
+    <rect x="288" y="0" width="96" height="96" fill="#deb887"/>
+    <rect x="0" y="96" width="96" height="96" fill="#deb887"/>
+    <rect x="96" y="96" width="96" height="96" fill="#8b4513"/>
+    <rect x="192" y="96" width="96" height="96" fill="#deb887"/>
+    <rect x="288" y="96" width="96" height="96" fill="#8b4513"/>
+    <rect x="0" y="192" width="96" height="96" fill="#8b4513"/>
+    <rect x="96" y="192" width="96" height="96" fill="#deb887"/>
+    <rect x="192" y="192" width="96" height="96" fill="#8b4513"/>
+    <rect x="288" y="192" width="96" height="96" fill="#deb887"/>
+    <rect x="0" y="288" width="96" height="96" fill="#deb887"/>
+    <rect x="96" y="288" width="96" height="96" fill="#8b4513"/>
+    <rect x="192" y="288" width="96" height="96" fill="#deb887"/>
+    <rect x="288" y="288" width="96" height="96" fill="#8b4513"/>
+    <!-- White checker piece -->
+    <circle cx="144" cy="144" r="40" fill="#f5f5f5" stroke="#333" stroke-width="3"/>
+    <!-- Black checker piece -->
+    <circle cx="240" cy="240" r="40" fill="#2c2c2c" stroke="#333" stroke-width="3"/>
+  </g>
+</svg>
