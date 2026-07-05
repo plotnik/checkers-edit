@@ -75,7 +75,7 @@ const createInitialBoard = () => {
  */
 const coordsToNotation = ([row, col]) => {
   const file = String.fromCharCode('a'.charCodeAt(0) + col);
-  const rank = row + 1;
+  const rank = 8 - row;
   return `${file}${rank}`;
 };
 
@@ -208,6 +208,23 @@ const buildMove = (start, seq, isCapture) => ({
   seq,
   isCapture,
 });
+
+/*
+ * The solver returns row coordinates from the opposite side of the board.
+ * Normalize them once at the API boundary so the rest of the app can keep using
+ * UI-oriented matrix coordinates.
+ */
+const convertSolverMove = (move) => {
+  if (!move || !Array.isArray(move.start) || !Array.isArray(move.seq)) {
+    return move;
+  }
+
+  return {
+    ...move,
+    start: [7 - move.start[0], move.start[1]],
+    seq: move.seq.map(([row, col]) => [7 - row, col]),
+  };
+};
 
 /*
  * Non-capturing moves are simple diagonal slides. Men move only forward, while
@@ -437,7 +454,7 @@ function App() {
 
     const result = await response.text();
     console.log("Response:", result);
-    return JSON.parse(result).move;
+    return convertSolverMove(JSON.parse(result).move);
   }, []);
 
   /*
