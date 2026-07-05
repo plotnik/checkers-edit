@@ -133,6 +133,10 @@ const promotePiece = (piece, row) => {
   return piece;
 };
 
+const reachesPromotionRow = (piece, row) => {
+  return (piece === "w" && row === 0) || (piece === "b" && row === 7);
+};
+
 /*
  * Captures are represented by a start square and one or more landing squares.
  * To update the board, we scan the diagonal between the previous square and the
@@ -194,9 +198,10 @@ const applyMoveToBoard = (sourceBoard, move) => {
 
     fromRow = toRow;
     fromCol = toCol;
+    piece = promotePiece(piece, fromRow);
   }
 
-  newBoard[fromRow][fromCol] = promotePiece(piece, fromRow);
+  newBoard[fromRow][fromCol] = piece;
   return newBoard;
 };
 
@@ -359,7 +364,10 @@ const getCaptureMovesForPiece = (sourceBoard, row, col, start = [row, col], seq 
       const nextBoard = cloneBoard(sourceBoard);
       nextBoard[row][col] = null;
       nextBoard[capturedRow][capturedCol] = null;
-      nextBoard[landingRow][landingCol] = piece;
+      const nextPiece = reachesPromotionRow(piece, landingRow)
+        ? promotePiece(piece, landingRow)
+        : piece;
+      nextBoard[landingRow][landingCol] = nextPiece;
 
       const nextSeq = [...seq, [landingRow, landingCol]];
       const continuations = getCaptureMovesForPiece(
@@ -620,6 +628,7 @@ function App() {
   }, []);
 
   const displayedMessage = message || `${PLAYER_LABELS[selectedColor]} move`;
+  const isBoardFlipped = appMode === "game" && selectedColor === "b";
 
   /*
    * The component tree is intentionally shallow: App owns the rules and API
@@ -650,6 +659,7 @@ function App() {
             onSquareClick={handleSquareClick}
             selectedSquare={selectedSquare}
             possibleMoves={possibleMoves}
+            isFlipped={isBoardFlipped}
           />
 
           <Controls

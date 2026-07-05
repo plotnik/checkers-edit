@@ -15,9 +15,31 @@ const MOVE_BORDER = '#00d9a7';
  * position and interaction hints from App, paints them onto a canvas, and
  * reports dark-square clicks back as row and column indexes.
  */
-const CheckersBoard = ({ board, onSquareClick, selectedSquare, possibleMoves }) => {
+const CheckersBoard = ({
+  board,
+  onSquareClick,
+  selectedSquare,
+  possibleMoves,
+  isFlipped = false,
+}) => {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
+
+  const getDisplayPosition = useCallback(
+    (row, col) => ({
+      row: isFlipped ? 7 - row : row,
+      col: isFlipped ? 7 - col : col,
+    }),
+    [isFlipped]
+  );
+
+  const getBoardPosition = useCallback(
+    (displayRow, displayCol) => ({
+      row: isFlipped ? 7 - displayRow : displayRow,
+      col: isFlipped ? 7 - displayCol : displayCol,
+    }),
+    [isFlipped]
+  );
 
   /*
    * Pieces are drawn as small cylinders rather than flat circles. Keeping this
@@ -148,8 +170,9 @@ const CheckersBoard = ({ board, onSquareClick, selectedSquare, possibleMoves }) 
     // Draw squares
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 8; col++) {
-        const x = offsetX + col * squareSize;
-        const y = offsetY + row * squareSize;
+        const displayPosition = getDisplayPosition(row, col);
+        const x = offsetX + displayPosition.col * squareSize;
+        const y = offsetY + displayPosition.row * squareSize;
         
         // Alternate colors - dark squares where (row + col) is odd
         const isDark = (row + col) % 2 === 1;
@@ -202,20 +225,29 @@ const CheckersBoard = ({ board, onSquareClick, selectedSquare, possibleMoves }) 
     ctx.font = `bold ${labelSize * 0.6}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
 
     // File labels (a-h) at bottom
-    const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-    for (let col = 0; col < 8; col++) {
-      const x = offsetX + col * squareSize + squareSize / 2;
+    for (let displayCol = 0; displayCol < 8; displayCol++) {
+      const { col } = getBoardPosition(0, displayCol);
+      const file = String.fromCharCode('a'.charCodeAt(0) + col);
+      const x = offsetX + displayCol * squareSize + squareSize / 2;
       const y = size - labelSize / 2;
-      ctx.fillText(files[col], x, y);
+      ctx.fillText(file, x, y);
     }
 
     // Rank labels (1-8) on left - 8 at top, 1 at bottom
-    for (let row = 0; row < 8; row++) {
+    for (let displayRow = 0; displayRow < 8; displayRow++) {
+      const { row } = getBoardPosition(displayRow, 0);
       const x = labelSize / 2;
-      const y = offsetY + row * squareSize + squareSize / 2;
+      const y = offsetY + displayRow * squareSize + squareSize / 2;
       ctx.fillText(String(8 - row), x, y);
     }
-  }, [board, drawPiece, possibleMoves, selectedSquare]);
+  }, [
+    board,
+    drawPiece,
+    getBoardPosition,
+    getDisplayPosition,
+    possibleMoves,
+    selectedSquare,
+  ]);
 
   /*
    * Canvas needs both CSS dimensions and pixel dimensions. The resize handler
@@ -268,18 +300,27 @@ const CheckersBoard = ({ board, onSquareClick, selectedSquare, possibleMoves }) 
     const squareSize = boardSize / 8;
     
     // Calculate which square was clicked
-    const col = Math.floor((x - labelSize) / squareSize);
-    const row = Math.floor((y - labelSize) / squareSize);
+    const displayCol = Math.floor((x - labelSize) / squareSize);
+    const displayRow = Math.floor((y - labelSize) / squareSize);
     
     // Check bounds
-    if (row < 0 || row > 7 || col < 0 || col > 7) return;
+    if (
+      displayRow < 0 ||
+      displayRow > 7 ||
+      displayCol < 0 ||
+      displayCol > 7
+    ) {
+      return;
+    }
+
+    const { row, col } = getBoardPosition(displayRow, displayCol);
     
     // Only allow clicks on dark squares
     const isDark = (row + col) % 2 === 1;
     if (!isDark) return;
     
     onSquareClick(row, col);
-  }, [onSquareClick]);
+  }, [getBoardPosition, onSquareClick]);
 
   return (
     <div className="board-container" ref={containerRef}>

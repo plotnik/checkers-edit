@@ -64,46 +64,48 @@ const Controls = ({
         </div>
       </div>
 
-      <div className="control-group">
-        <label className="control-label">Player</label>
-        <div className="toggle-container">
-          <button
-            className={`toggle-btn ${selectedColor === 'w' ? 'active white' : ''}`}
-            onClick={() => setSelectedColor('w')}
-          >
-            <span className="piece-icon white-piece"></span>
-            White
-          </button>            
-          <button
-            className={`toggle-btn ${selectedColor === 'b' ? 'active' : ''}`}
-            onClick={() => setSelectedColor('b')}
-          >
-            <span className="piece-icon black-piece"></span>
-            Black
-          </button>                          
-        </div>
-      </div>
-
       {appMode !== 'game' && (
-        <div className="control-group">
-          <label className="control-label">Piece Type</label>
-          <div className="toggle-container">
-            <button
-              className={`toggle-btn ${selectedType === 'single' ? 'active' : ''}`}
-              onClick={() => setSelectedType('single')}
-            >
-              <span className="type-icon single"></span>
-              Single
-            </button>
-            <button
-              className={`toggle-btn ${selectedType === 'king' ? 'active' : ''}`}
-              onClick={() => setSelectedType('king')}
-            >
-              <span className="type-icon king"></span>
-              King
-            </button>
+        <>
+          <div className="control-group">
+            <label className="control-label">Player</label>
+            <div className="toggle-container">
+              <button
+                className={`toggle-btn ${selectedColor === 'w' ? 'active white' : ''}`}
+                onClick={() => setSelectedColor('w')}
+              >
+                <span className="piece-icon white-piece"></span>
+                White
+              </button>
+              <button
+                className={`toggle-btn ${selectedColor === 'b' ? 'active' : ''}`}
+                onClick={() => setSelectedColor('b')}
+              >
+                <span className="piece-icon black-piece"></span>
+                Black
+              </button>
+            </div>
           </div>
-        </div>
+
+          <div className="control-group">
+            <label className="control-label">Piece Type</label>
+            <div className="toggle-container">
+              <button
+                className={`toggle-btn ${selectedType === 'single' ? 'active' : ''}`}
+                onClick={() => setSelectedType('single')}
+              >
+                <span className="type-icon single"></span>
+                Single
+              </button>
+              <button
+                className={`toggle-btn ${selectedType === 'king' ? 'active' : ''}`}
+                onClick={() => setSelectedType('king')}
+              >
+                <span className="type-icon king"></span>
+                King
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* <div className="preview-section">
