@@ -5,12 +5,25 @@ const LIGHT_SQUARE = '#f0d9b5';
 const DARK_SQUARE = '#b58863';
 const BOARD_BORDER = '#5d3a1a';
 const LABEL_COLOR = '#f5e6d3';
+const SELECTED_FILL = 'rgba(255, 215, 0, 0.28)';
+const SELECTED_BORDER = '#ffd700';
+const MOVE_DOT = 'rgba(0, 184, 148, 0.9)';
+const MOVE_BORDER = '#00d9a7';
 
-const CheckersBoard = ({ board, onSquareClick }) => {
+/*
+ * The board component is deliberately visual-only. It receives the current
+ * position and interaction hints from App, paints them onto a canvas, and
+ * reports dark-square clicks back as row and column indexes.
+ */
+const CheckersBoard = ({ board, onSquareClick, selectedSquare, possibleMoves }) => {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
 
-  // Draw isometric cylinder (piece)
+  /*
+   * Pieces are drawn as small cylinders rather than flat circles. Keeping this
+   * drawing code in one callback makes the board loop easy to read: the board
+   * decides where a piece belongs, and this helper decides how it looks.
+   */
   const drawPiece = useCallback((ctx, centerX, centerY, radius, color, isKing) => {
     const height = radius * 0.4;
     const ellipseHeight = radius * 0.3;
@@ -104,13 +117,26 @@ const CheckersBoard = ({ board, onSquareClick }) => {
     }
   }, []);
 
-  // Draw the board
+  /*
+   * Redrawing starts from a blank canvas every time. The function paints the
+   * board in layers: border, squares, selection overlays, move targets, pieces,
+   * and finally the file/rank labels around the edge.
+   */
   const drawBoard = useCallback((ctx, size) => {
     const labelSize = size * 0.06;
     const boardSize = size - labelSize * 2;
     const squareSize = boardSize / 8;
     const offsetX = labelSize;
     const offsetY = labelSize;
+    const selectedKey = selectedSquare
+      ? `${selectedSquare[0]},${selectedSquare[1]}`
+      : null;
+    const moveTargets = new Set(
+      possibleMoves.map((move) => {
+        const [row, col] = move.seq[move.seq.length - 1];
+        return `${row},${col}`;
+      })
+    );
 
     // Clear canvas
     ctx.clearRect(0, 0, size, size);
@@ -129,6 +155,33 @@ const CheckersBoard = ({ board, onSquareClick }) => {
         const isDark = (row + col) % 2 === 1;
         ctx.fillStyle = isDark ? DARK_SQUARE : LIGHT_SQUARE;
         ctx.fillRect(x, y, squareSize, squareSize);
+
+        if (`${row},${col}` === selectedKey) {
+          ctx.fillStyle = SELECTED_FILL;
+          ctx.fillRect(x, y, squareSize, squareSize);
+          ctx.strokeStyle = SELECTED_BORDER;
+          ctx.lineWidth = Math.max(3, squareSize * 0.06);
+          ctx.strokeRect(
+            x + ctx.lineWidth / 2,
+            y + ctx.lineWidth / 2,
+            squareSize - ctx.lineWidth,
+            squareSize - ctx.lineWidth
+          );
+        }
+
+        if (moveTargets.has(`${row},${col}`)) {
+          const centerX = x + squareSize / 2;
+          const centerY = y + squareSize / 2;
+          const targetRadius = squareSize * 0.16;
+
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, targetRadius, 0, Math.PI * 2);
+          ctx.fillStyle = MOVE_DOT;
+          ctx.fill();
+          ctx.strokeStyle = MOVE_BORDER;
+          ctx.lineWidth = Math.max(2, squareSize * 0.035);
+          ctx.stroke();
+        }
         
         // Draw piece if present
         const piece = board[row][col];
@@ -162,9 +215,13 @@ const CheckersBoard = ({ board, onSquareClick }) => {
       const y = offsetY + row * squareSize + squareSize / 2;
       ctx.fillText(String(8 - row), x, y);
     }
-  }, [board, drawPiece]);
+  }, [board, drawPiece, possibleMoves, selectedSquare]);
 
-  // Handle canvas resize
+  /*
+   * Canvas needs both CSS dimensions and pixel dimensions. The resize handler
+   * keeps the board responsive while scaling the drawing buffer by the device
+   * pixel ratio so the board stays sharp on high-density displays.
+   */
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
@@ -191,7 +248,12 @@ const CheckersBoard = ({ board, onSquareClick }) => {
     return () => window.removeEventListener('resize', resizeCanvas);
   }, [drawBoard]);
 
-  // Handle click
+  /*
+   * Browser click coordinates arrive in pixels relative to the viewport. This
+   * handler converts them into board coordinates by removing the label margin
+   * and dividing by square size, then ignores labels, out-of-bounds clicks, and
+   * light squares.
+   */
   const handleClick = useCallback((e) => {
     const canvas = canvasRef.current;
     if (!canvas) return;

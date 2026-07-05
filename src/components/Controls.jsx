@@ -1,6 +1,13 @@
 import './Controls.css';
 
+/*
+ * Controls is a presentational panel. It does not know the checkers rules; it
+ * simply exposes the current mode, player, piece type, and actions that App
+ * passes down as props.
+ */
 const Controls = ({
+  appMode,
+  setAppMode,
   selectedColor,
   setSelectedColor,
   selectedType,
@@ -9,8 +16,31 @@ const Controls = ({
   onSolve,
   isLoading
 }) => {
+  /*
+   * The controls are grouped by intent. Mode changes how board clicks behave,
+   * Player chooses who is acting or being placed, Piece Type applies only in
+   * edit mode, and the bottom row holds command-style actions.
+   */
   return (
     <div className="controls">
+      <div className="control-group">
+        <label className="control-label">Mode</label>
+        <div className="toggle-container">
+          <button
+            className={`toggle-btn ${appMode === 'edit' ? 'active' : ''}`}
+            onClick={() => setAppMode('edit')}
+          >
+            Edit Mode
+          </button>
+          <button
+            className={`toggle-btn ${appMode === 'game' ? 'active' : ''}`}
+            onClick={() => setAppMode('game')}
+          >
+            Game Mode
+          </button>
+        </div>
+      </div>
+
       <div className="control-group">
         <label className="control-label">Player</label>
         <div className="toggle-container">
@@ -31,12 +61,13 @@ const Controls = ({
         </div>
       </div>
 
-      <div className="control-group">
+      <div className={`control-group ${appMode === 'game' ? 'muted' : ''}`}>
         <label className="control-label">Piece Type</label>
         <div className="toggle-container">
           <button
             className={`toggle-btn ${selectedType === 'single' ? 'active' : ''}`}
             onClick={() => setSelectedType('single')}
+            disabled={appMode === 'game'}
           >
             <span className="type-icon single"></span>
             Single
@@ -44,6 +75,7 @@ const Controls = ({
           <button
             className={`toggle-btn ${selectedType === 'king' ? 'active' : ''}`}
             onClick={() => setSelectedType('king')}
+            disabled={appMode === 'game'}
           >
             <span className="type-icon king"></span>
             King

@@ -19,6 +19,10 @@
   gap: 10px;
 }
 
+.control-group.muted {
+  opacity: 0.55;
+}
+
 .control-label {
   font-size: 12px;
   font-weight: 600;
@@ -52,6 +56,10 @@
 .toggle-btn:hover {
   border-color: #666;
   background: linear-gradient(145deg, #3a3a3a, #333);
+}
+
+.toggle-btn:disabled {
+  cursor: not-allowed;
 }
 
 .toggle-btn.active {
