@@ -86,6 +86,7 @@ Board format details:
 - `B` and `W` for kings
 - `.` for empty dark squares
 - `_` for light squares
+- `depth` is controlled by the `SOLVER_DEPTH` constant in `src/App.jsx` and is currently `12`
 
 ## Expected Solver Response
 

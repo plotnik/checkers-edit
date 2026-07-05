@@ -15,6 +15,8 @@ const PLAYER_LABELS = {
   w: "White",
 };
 
+const SOLVER_DEPTH = 12;
+
 const opponentOf = (color) => (color === "w" ? "b" : "w");
 
 const getPieceColor = (piece) => {
@@ -436,7 +438,7 @@ function App() {
     const req = {
       board: serializeBoard(sourceBoard),
       side,
-      depth: 8,
+      depth: SOLVER_DEPTH,
     };
     console.log("Board:", req);
 
@@ -568,16 +570,28 @@ function App() {
   }, []);
 
   /*
-   * The Solve button keeps the original editor workflow: ask the backend for
-   * the best move in the current position and show that move without changing
-   * the board.
+   * In edit mode, Solve keeps the original editor workflow: ask the backend for
+   * the best move and show it without changing the board. In game mode, the
+   * same button lets the computer make the current player's move on the board.
    */
   const handleSolve = useCallback(async () => {
     setIsLoading(true);
     setMessage('');
+    setSelectedSquare(null);
+    setPossibleMoves([]);
 
     try {
       const move = await requestBestMove(board, selectedColor);
+      if (!move) {
+        setMessage(`${PLAYER_LABELS[selectedColor]} has no move.`);
+        return;
+      }
+
+      if (appMode === "game") {
+        setBoard((prevBoard) => applyMoveToBoard(prevBoard, move));
+        setSelectedColor(opponentOf(selectedColor));
+      }
+
       setMessage(formatMove(move));
 
     } catch (error) {
@@ -586,7 +600,7 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [board, requestBestMove, selectedColor]);
+  }, [appMode, board, requestBestMove, selectedColor]);
 
   /*
    * Mode and player changes invalidate any pending game-mode selection. The
