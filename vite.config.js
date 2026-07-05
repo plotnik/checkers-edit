@@ -10,7 +10,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['vite.svg', 'apple-touch-icon.svg', 'mask-icon.svg'],
       manifest: {
-        name: 'Checkers Position Editor',
+        name: 'Russian Checkers',
         short_name: 'Checkers',
         description: 'Set up checkers positions and solve them',
         theme_color: '#1a1a2e',

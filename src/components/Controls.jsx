@@ -23,20 +23,43 @@ const Controls = ({
    */
   return (
     <div className="controls">
+      <div className="action-buttons">
+        <button 
+          className="action-btn solve-btn"
+          onClick={onSolve}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <span className="spinner"></span>
+              Solving...
+            </>
+          ) : (
+            'Solve'
+          )}
+        </button>
+        <button 
+          className="action-btn clear-btn"
+          onClick={onClear}
+          disabled={isLoading}
+        >
+          Clear Board
+        </button>
+      </div>
       <div className="control-group">
         <label className="control-label">Mode</label>
         <div className="toggle-container">
-          <button
-            className={`toggle-btn ${appMode === 'edit' ? 'active' : ''}`}
-            onClick={() => setAppMode('edit')}
-          >
-            Edit Mode
-          </button>
           <button
             className={`toggle-btn ${appMode === 'game' ? 'active' : ''}`}
             onClick={() => setAppMode('game')}
           >
             Game Mode
+          </button>
+          <button
+            className={`toggle-btn ${appMode === 'edit' ? 'active' : ''}`}
+            onClick={() => setAppMode('edit')}
+          >
+            Edit Mode
           </button>
         </div>
       </div>
@@ -61,27 +84,27 @@ const Controls = ({
         </div>
       </div>
 
-      <div className={`control-group ${appMode === 'game' ? 'muted' : ''}`}>
-        <label className="control-label">Piece Type</label>
-        <div className="toggle-container">
-          <button
-            className={`toggle-btn ${selectedType === 'single' ? 'active' : ''}`}
-            onClick={() => setSelectedType('single')}
-            disabled={appMode === 'game'}
-          >
-            <span className="type-icon single"></span>
-            Single
-          </button>
-          <button
-            className={`toggle-btn ${selectedType === 'king' ? 'active' : ''}`}
-            onClick={() => setSelectedType('king')}
-            disabled={appMode === 'game'}
-          >
-            <span className="type-icon king"></span>
-            King
-          </button>
+      {appMode !== 'game' && (
+        <div className="control-group">
+          <label className="control-label">Piece Type</label>
+          <div className="toggle-container">
+            <button
+              className={`toggle-btn ${selectedType === 'single' ? 'active' : ''}`}
+              onClick={() => setSelectedType('single')}
+            >
+              <span className="type-icon single"></span>
+              Single
+            </button>
+            <button
+              className={`toggle-btn ${selectedType === 'king' ? 'active' : ''}`}
+              onClick={() => setSelectedType('king')}
+            >
+              <span className="type-icon king"></span>
+              King
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* <div className="preview-section">
         <span className="preview-label">Selected:</span>
@@ -90,29 +113,6 @@ const Controls = ({
         </div>
       </div> */}
 
-      <div className="action-buttons">
-        <button 
-          className="action-btn clear-btn"
-          onClick={onClear}
-          disabled={isLoading}
-        >
-          Clear Board
-        </button>
-        <button 
-          className="action-btn solve-btn"
-          onClick={onSolve}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <span className="spinner"></span>
-              Solving...
-            </>
-          ) : (
-            'Solve'
-          )}
-        </button>
-      </div>
     </div>
   );
 };

@@ -402,7 +402,7 @@ function App() {
    * choosing a game-mode move.
    */
   const [board, setBoard] = useState(createInitialBoard);
-  const [appMode, setAppMode] = useState("edit");
+  const [appMode, setAppMode] = useState("game");
   const [selectedColor, setSelectedColor] = useState("w"); // 'b' for black, 'w' for white
   const [selectedType, setSelectedType] = useState("single"); // 'single' or 'king'
   const [selectedSquare, setSelectedSquare] = useState(null);
@@ -588,6 +588,8 @@ function App() {
     setPossibleMoves([]);
   }, []);
 
+  const displayedMessage = message || `${PLAYER_LABELS[selectedColor]} move`;
+
   /*
    * The component tree is intentionally shallow: App owns the rules and API
    * calls, CheckersBoard owns canvas rendering and coordinate clicks, and
@@ -596,18 +598,18 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Checkers Position Editor</h1>
+        <h1>Russian Checkers</h1>
         {/* <p className="subtitle">Set up your position and solve</p> */}
       </header>
 
       <main className="app-main">
-        {message && (
+        {displayedMessage && (
           <div
             className={`message ${
-              message.startsWith("Error") ? "error" : "success"
+              displayedMessage.startsWith("Error") ? "error" : "success"
             }`}
           >
-            {message}
+            {displayedMessage}
           </div>
         )}
 
