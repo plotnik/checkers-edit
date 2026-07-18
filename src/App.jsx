@@ -17,6 +17,7 @@ const PLAYER_LABELS = {
 
 const SOLVER_DEPTH = 12;
 const BOARD_STORAGE_KEY = "checkers-board";
+const MANUAL_BOARD_STORAGE_KEY = "checkers-board-save";
 const VALID_PIECES = new Set([null, "b", "B", "w", "W"]);
 
 const opponentOf = (color) => (color === "w" ? "b" : "w");
@@ -77,24 +78,26 @@ const createInitialBoard = () => {
  * or have been edited manually. Restore only a complete 8 by 8 board containing
  * symbols understood by the renderer and solver, otherwise use a new game.
  */
-const loadSavedBoard = () => {
-  try {
-    const savedBoard = JSON.parse(localStorage.getItem(BOARD_STORAGE_KEY));
-    const isValidBoard =
-      Array.isArray(savedBoard) &&
-      savedBoard.length === 8 &&
-      savedBoard.every(
-        (row) =>
-          Array.isArray(row) &&
-          row.length === 8 &&
-          row.every((piece) => VALID_PIECES.has(piece))
-      );
+const isValidBoard = (board) =>
+  Array.isArray(board) &&
+  board.length === 8 &&
+  board.every(
+    (row) =>
+      Array.isArray(row) &&
+      row.length === 8 &&
+      row.every((piece) => VALID_PIECES.has(piece))
+  );
 
-    return isValidBoard ? savedBoard : createInitialBoard();
+const readStoredBoard = (storageKey) => {
+  try {
+    const savedBoard = JSON.parse(localStorage.getItem(storageKey));
+    return isValidBoard(savedBoard) ? savedBoard : null;
   } catch {
-    return createInitialBoard();
+    return null;
   }
 };
+
+const loadSavedBoard = () => readStoredBoard(BOARD_STORAGE_KEY) ?? createInitialBoard();
 
 /*
  * User-facing messages use compact board notation such as c3-d4. This helper
@@ -611,6 +614,29 @@ function App() {
     setMessage("");
   }, []);
 
+  const handleSave = useCallback(() => {
+    try {
+      localStorage.setItem(MANUAL_BOARD_STORAGE_KEY, JSON.stringify(board));
+      setMessage("Board saved.");
+    } catch (error) {
+      console.error("Unable to save board position:", error);
+      setMessage("Error: Unable to save board.");
+    }
+  }, [board]);
+
+  const handleRestore = useCallback(() => {
+    const savedBoard = readStoredBoard(MANUAL_BOARD_STORAGE_KEY);
+    if (!savedBoard) {
+      setMessage("Error: No valid saved board found.");
+      return;
+    }
+
+    setBoard(savedBoard);
+    setSelectedSquare(null);
+    setPossibleMoves([]);
+    setMessage("Board restored.");
+  }, []);
+
   /*
    * In edit mode, Solve keeps the original editor workflow: ask the backend for
    * the best move and show it without changing the board. In game mode, the
@@ -705,6 +731,8 @@ function App() {
             setSelectedType={setSelectedType}
             onClear={handleClear}
             onSolve={handleSolve}
+            onSave={handleSave}
+            onRestore={handleRestore}
             isLoading={isLoading}
           />
         </div>

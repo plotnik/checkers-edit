@@ -14,6 +14,8 @@ const Controls = ({
   setSelectedType,
   onClear,
   onSolve,
+  onSave,
+  onRestore,
   isLoading
 }) => {
   /*
@@ -46,6 +48,25 @@ const Controls = ({
           Clear Board
         </button>
       </div>
+      {appMode === 'edit' && (
+        <div className="action-buttons edit-save-buttons">
+          <button
+            className="action-btn save-btn"
+            onClick={onSave}
+            disabled={isLoading}
+          >
+            Save
+          </button>
+          <button
+            className="action-btn restore-btn"
+            onClick={onRestore}
+            disabled={isLoading}
+          >
+            Restore
+          </button>
+        </div>
+      )}
+
       <div className="control-group">
         <label className="control-label">Mode</label>
         <div className="toggle-container">
