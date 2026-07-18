@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import config from './config';
 import CheckersBoard from "./components/CheckersBoard";
 import Controls from "./components/Controls";
@@ -16,6 +16,8 @@ const PLAYER_LABELS = {
 };
 
 const SOLVER_DEPTH = 12;
+const BOARD_STORAGE_KEY = "checkers-board";
+const VALID_PIECES = new Set([null, "b", "B", "w", "W"]);
 
 const opponentOf = (color) => (color === "w" ? "b" : "w");
 
@@ -68,6 +70,30 @@ const createInitialBoard = () => {
   }
 
   return board;
+};
+
+/*
+ * A saved position is untrusted input: it may come from an older app version
+ * or have been edited manually. Restore only a complete 8 by 8 board containing
+ * symbols understood by the renderer and solver, otherwise use a new game.
+ */
+const loadSavedBoard = () => {
+  try {
+    const savedBoard = JSON.parse(localStorage.getItem(BOARD_STORAGE_KEY));
+    const isValidBoard =
+      Array.isArray(savedBoard) &&
+      savedBoard.length === 8 &&
+      savedBoard.every(
+        (row) =>
+          Array.isArray(row) &&
+          row.length === 8 &&
+          row.every((piece) => VALID_PIECES.has(piece))
+      );
+
+    return isValidBoard ? savedBoard : createInitialBoard();
+  } catch {
+    return createInitialBoard();
+  }
 };
 
 /*
@@ -428,7 +454,7 @@ function App() {
    * state. The selected square and possible moves exist only while the user is
    * choosing a game-mode move.
    */
-  const [board, setBoard] = useState(createInitialBoard);
+  const [board, setBoard] = useState(loadSavedBoard);
   const [appMode, setAppMode] = useState("game");
   const [selectedColor, setSelectedColor] = useState("w"); // 'b' for black, 'w' for white
   const [selectedType, setSelectedType] = useState("single"); // 'single' or 'king'
@@ -436,6 +462,14 @@ function App() {
   const [possibleMoves, setPossibleMoves] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(BOARD_STORAGE_KEY, JSON.stringify(board));
+    } catch (error) {
+      console.error("Unable to save board position:", error);
+    }
+  }, [board]);
 
   /*
    * The solver boundary is a small adapter: serialize the board, post it to the
