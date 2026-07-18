@@ -26,46 +26,48 @@ const Controls = ({
    */
   return (
     <div className="controls">
-      <div className="action-buttons">
-        <button 
-          className="action-btn solve-btn"
-          onClick={onSolve}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <span className="spinner"></span>
-              Solving...
-            </>
-          ) : (
-            'Solve'
-          )}
-        </button>
-        <button 
-          className="action-btn clear-btn"
-          onClick={onClear}
-          disabled={isLoading}
-        >
-          Clear Board
-        </button>
-      </div>
       {appMode === 'edit' && (
-        <div className="action-buttons edit-save-buttons">
-          <button
-            className="action-btn save-btn"
-            onClick={onSave}
-            disabled={isLoading}
-          >
-            Save
-          </button>
-          <button
-            className="action-btn restore-btn"
-            onClick={onRestore}
-            disabled={isLoading}
-          >
-            Restore
-          </button>
-        </div>
+        <>
+          <div className="action-buttons">
+            <button
+              className="action-btn solve-btn"
+              onClick={onSolve}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <span className="spinner"></span>
+                  Solving...
+                </>
+              ) : (
+                'Solve'
+              )}
+            </button>
+            <button
+              className="action-btn clear-btn"
+              onClick={onClear}
+              disabled={isLoading}
+            >
+              Clear Board
+            </button>
+          </div>
+          <div className="action-buttons edit-save-buttons">
+            <button
+              className="action-btn save-btn"
+              onClick={onSave}
+              disabled={isLoading}
+            >
+              Save
+            </button>
+            <button
+              className="action-btn restore-btn"
+              onClick={onRestore}
+              disabled={isLoading}
+            >
+              Restore
+            </button>
+          </div>
+        </>
       )}
 
       <div className="control-group">
