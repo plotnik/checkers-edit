@@ -80,41 +80,12 @@
   color: #333;
 }
 
-.piece-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.piece-icon.black-piece {
-  background: linear-gradient(145deg, #444, #222);
-  border: 2px solid #555;
-}
-
-.piece-icon.white-piece {
-  background: linear-gradient(145deg, #fff, #ddd);
-  border: 2px solid #ccc;
-}
-
-.type-icon {
-  width: 20px;
-  height: 16px;
-  background: linear-gradient(145deg, #888, #666);
-  border-radius: 4px;
-  position: relative;
-}
-
-.type-icon.king::after {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 16px;
-  height: 12px;
-  background: linear-gradient(145deg, #888, #666);
-  border-radius: 4px;
+.piece-svg {
+  width: 28px;
+  height: 24px;
+  flex: 0 0 auto;
+  overflow: visible;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
 }
 
 .preview-section {

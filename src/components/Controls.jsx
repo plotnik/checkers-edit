@@ -1,4 +1,5 @@
 import './Controls.css';
+import PieceIcon from './PieceIcon';
 
 /*
  * Controls is a presentational panel. It does not know the checkers rules; it
@@ -94,14 +95,14 @@ const Controls = ({
                 className={`toggle-btn ${selectedColor === 'w' ? 'active white' : ''}`}
                 onClick={() => setSelectedColor('w')}
               >
-                <span className="piece-icon white-piece"></span>
+                <PieceIcon color="white" />
                 White
               </button>
               <button
                 className={`toggle-btn ${selectedColor === 'b' ? 'active' : ''}`}
                 onClick={() => setSelectedColor('b')}
               >
-                <span className="piece-icon black-piece"></span>
+                <PieceIcon color="black" />
                 Black
               </button>
             </div>
@@ -114,14 +115,17 @@ const Controls = ({
                 className={`toggle-btn ${selectedType === 'single' ? 'active' : ''}`}
                 onClick={() => setSelectedType('single')}
               >
-                <span className="type-icon single"></span>
+                <PieceIcon color={selectedColor === 'w' ? 'white' : 'black'} />
                 Single
               </button>
               <button
                 className={`toggle-btn ${selectedType === 'king' ? 'active' : ''}`}
                 onClick={() => setSelectedType('king')}
               >
-                <span className="type-icon king"></span>
+                <PieceIcon
+                  color={selectedColor === 'w' ? 'white' : 'black'}
+                  isKing
+                />
                 King
               </button>
             </div>
