@@ -13,6 +13,8 @@ const Controls = ({
   setSelectedColor,
   selectedType,
   setSelectedType,
+  solverDepth,
+  setSolverDepth,
   onClear,
   onSolve,
   onSave,
@@ -28,7 +30,7 @@ const Controls = ({
     <div className="controls">
       {appMode === 'edit' && (
         <>
-          <div className="action-buttons">
+          <div className="action-buttons solver-action-buttons">
             <button
               className="action-btn solve-btn"
               onClick={onSolve}
@@ -43,6 +45,22 @@ const Controls = ({
                 'Solve'
               )}
             </button>
+            <input
+              id="solver-depth"
+              className="number-input solver-depth-input"
+              type="number"
+              min="1"
+              step="1"
+              value={solverDepth}
+              aria-label="Solver depth"
+              onChange={(event) => {
+                const nextDepth = Number.parseInt(event.target.value, 10);
+                if (Number.isInteger(nextDepth) && nextDepth >= 1) {
+                  setSolverDepth(nextDepth);
+                }
+              }}
+              disabled={isLoading}
+            />
             <button
               className="action-btn clear-btn"
               onClick={onClear}
@@ -91,7 +109,7 @@ const Controls = ({
       {appMode !== 'game' && (
         <>
           <div className="control-group">
-            <label className="control-label">Player</label>
+            <label className="control-label">Piece</label>
             <div className="toggle-container">
               <button
                 className={`toggle-btn ${selectedColor === 'w' ? 'active white' : ''}`}
@@ -111,7 +129,7 @@ const Controls = ({
           </div>
 
           <div className="control-group">
-            <label className="control-label">Piece Type</label>
+            {/* <label className="control-label">Piece Type</label> */}
             <div className="toggle-container">
               <button
                 className={`toggle-btn ${selectedType === 'single' ? 'active' : ''}`}

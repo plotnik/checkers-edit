@@ -15,7 +15,7 @@ const PLAYER_LABELS = {
   w: "White",
 };
 
-const SOLVER_DEPTH = 12;
+const DEFAULT_SOLVER_DEPTH = 12;
 const BOARD_STORAGE_KEY = "checkers-board";
 const MANUAL_BOARD_STORAGE_KEY = "checkers-board-save";
 const VALID_PIECES = new Set([null, "b", "B", "w", "W"]);
@@ -271,6 +271,7 @@ function App() {
   const [selectedSquare, setSelectedSquare] = useState(null);
   const [possibleMoves, setPossibleMoves] = useState([]);
   const [activeMove, setActiveMove] = useState(null);
+  const [solverDepth, setSolverDepth] = useState(DEFAULT_SOLVER_DEPTH);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -291,7 +292,7 @@ function App() {
     const req = {
       board: serializeBoard(sourceBoard),
       side,
-      depth: SOLVER_DEPTH,
+      depth: solverDepth,
     };
     console.log("Board:", req);
 
@@ -310,7 +311,7 @@ function App() {
     const result = await response.text();
     console.log("Response:", result);
     return convertApiMove(JSON.parse(result).move);
-  }, []);
+  }, [solverDepth]);
 
   const requestLegalMoves = useCallback(async (sourceBoard, side) => {
     const response = await fetch(`${config.apiBaseUrl}/moves`, {
@@ -616,6 +617,8 @@ function App() {
             setSelectedColor={handlePlayerChange}
             selectedType={selectedType}
             setSelectedType={setSelectedType}
+            solverDepth={solverDepth}
+            setSolverDepth={setSolverDepth}
             onClear={handleClear}
             onSolve={handleSolve}
             onSave={handleSave}
