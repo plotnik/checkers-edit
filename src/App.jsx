@@ -30,10 +30,6 @@ const getPieceColor = (piece) => {
   return piece.toLowerCase();
 };
 
-const isKingPiece = (piece) => piece === "B" || piece === "W";
-
-const isInsideBoard = (row, col) => row >= 0 && row < 8 && col >= 0 && col < 8;
-
 const cloneBoard = (sourceBoard) => sourceBoard.map((row) => [...row]);
 
 /*
@@ -129,9 +125,9 @@ const serializeBoard = (sourceBoard) => {
 };
 
 /*
- * Solver moves and locally generated moves share the same shape. Formatting
- * stays in one place so solve results, human moves, and opponent replies are
- * presented consistently.
+ * Best moves and legal moves share the same API shape. Formatting stays in one
+ * place so solve results, human moves, and opponent replies are presented
+ * consistently.
  */
 const formatMove = (move) => {
   if (!move) {
@@ -160,10 +156,6 @@ const promotePiece = (piece, row) => {
   }
 
   return piece;
-};
-
-const reachesPromotionRow = (piece, row) => {
-  return (piece === "w" && row === 0) || (piece === "b" && row === 7);
 };
 
 /*
@@ -235,22 +227,11 @@ const applyMoveToBoard = (sourceBoard, move) => {
 };
 
 /*
- * Local move generation produces the same object shape as the API. That lets
- * the click handler treat human moves and solver moves with the same formatter
- * and board applier.
- */
-const buildMove = (start, seq, isCapture) => ({
-  start,
-  seq,
-  isCapture,
-});
-
-/*
- * The solver returns row coordinates from the opposite side of the board.
+ * The API returns row coordinates from the opposite side of the board.
  * Normalize them once at the API boundary so the rest of the app can keep using
  * UI-oriented matrix coordinates.
  */
-const convertSolverMove = (move) => {
+const convertApiMove = (move) => {
   if (!move || !Array.isArray(move.start) || !Array.isArray(move.seq)) {
     return move;
   }
@@ -259,186 +240,13 @@ const convertSolverMove = (move) => {
     ...move,
     start: [7 - move.start[0], move.start[1]],
     seq: move.seq.map(([row, col]) => [7 - row, col]),
+    ...(Array.isArray(move.captured) && {
+      captured: move.captured.map(([row, col]) => [7 - row, col]),
+    }),
+    ...(Array.isArray(move.end) && {
+      end: [7 - move.end[0], move.end[1]],
+    }),
   };
-};
-
-/*
- * Non-capturing moves are simple diagonal slides. Men move only forward, while
- * kings can fly along any clear diagonal until another piece blocks the ray.
- */
-const getSimpleMovesForPiece = (sourceBoard, row, col) => {
-  const piece = sourceBoard[row][col];
-  if (!piece) {
-    return [];
-  }
-
-  const color = getPieceColor(piece);
-  const directions = isKingPiece(piece)
-    ? [
-        [-1, -1],
-        [-1, 1],
-        [1, -1],
-        [1, 1],
-      ]
-    : color === "w"
-      ? [
-          [-1, -1],
-          [-1, 1],
-        ]
-      : [
-          [1, -1],
-          [1, 1],
-        ];
-
-  const moves = [];
-
-  for (const [rowDelta, colDelta] of directions) {
-    let toRow = row + rowDelta;
-    let toCol = col + colDelta;
-
-    while (isInsideBoard(toRow, toCol) && !sourceBoard[toRow][toCol]) {
-      moves.push(buildMove([row, col], [[toRow, toCol]], false));
-
-      if (!isKingPiece(piece)) {
-        break;
-      }
-
-      toRow += rowDelta;
-      toCol += colDelta;
-    }
-  }
-
-  return moves;
-};
-
-/*
- * Captures can branch, especially when a piece can continue jumping after the
- * first capture. This recursive generator explores each possible capture path
- * by making a temporary board for the partial move and asking what captures
- * remain from the new landing square.
- */
-const getCaptureMovesForPiece = (sourceBoard, row, col, start = [row, col], seq = []) => {
-  const piece = sourceBoard[row][col];
-  if (!piece) {
-    return [];
-  }
-
-  const color = getPieceColor(piece);
-  const directions = [
-    [-1, -1],
-    [-1, 1],
-    [1, -1],
-    [1, 1],
-  ];
-  const moves = [];
-
-  for (const [rowDelta, colDelta] of directions) {
-    if (isKingPiece(piece)) {
-      let scanRow = row + rowDelta;
-      let scanCol = col + colDelta;
-      let capturedSquare = null;
-
-      while (isInsideBoard(scanRow, scanCol)) {
-        const scannedPiece = sourceBoard[scanRow][scanCol];
-
-        if (scannedPiece) {
-          if (getPieceColor(scannedPiece) === color || capturedSquare) {
-            break;
-          }
-
-          capturedSquare = [scanRow, scanCol];
-        } else if (capturedSquare) {
-          const nextBoard = cloneBoard(sourceBoard);
-          nextBoard[row][col] = null;
-          nextBoard[capturedSquare[0]][capturedSquare[1]] = null;
-          nextBoard[scanRow][scanCol] = piece;
-
-          const nextSeq = [...seq, [scanRow, scanCol]];
-          const continuations = getCaptureMovesForPiece(
-            nextBoard,
-            scanRow,
-            scanCol,
-            start,
-            nextSeq
-          );
-
-          if (continuations.length > 0) {
-            moves.push(...continuations);
-          } else {
-            moves.push(buildMove(start, nextSeq, true));
-          }
-        }
-
-        scanRow += rowDelta;
-        scanCol += colDelta;
-      }
-    } else {
-      const capturedRow = row + rowDelta;
-      const capturedCol = col + colDelta;
-      const landingRow = row + rowDelta * 2;
-      const landingCol = col + colDelta * 2;
-
-      if (
-        !isInsideBoard(landingRow, landingCol) ||
-        sourceBoard[landingRow][landingCol]
-      ) {
-        continue;
-      }
-
-      const capturedPiece = sourceBoard[capturedRow][capturedCol];
-      if (!capturedPiece || getPieceColor(capturedPiece) === color) {
-        continue;
-      }
-
-      const nextBoard = cloneBoard(sourceBoard);
-      nextBoard[row][col] = null;
-      nextBoard[capturedRow][capturedCol] = null;
-      const nextPiece = reachesPromotionRow(piece, landingRow)
-        ? promotePiece(piece, landingRow)
-        : piece;
-      nextBoard[landingRow][landingCol] = nextPiece;
-
-      const nextSeq = [...seq, [landingRow, landingCol]];
-      const continuations = getCaptureMovesForPiece(
-        nextBoard,
-        landingRow,
-        landingCol,
-        start,
-        nextSeq
-      );
-
-      if (continuations.length > 0) {
-        moves.push(...continuations);
-      } else {
-        moves.push(buildMove(start, nextSeq, true));
-      }
-    }
-  }
-
-  return moves;
-};
-
-/*
- * Russian checkers requires a capture when one exists. The app therefore
- * gathers captures and quiet moves separately, returning quiet moves only when
- * the current player has no capture anywhere on the board.
- */
-const getLegalMoves = (sourceBoard, color) => {
-  const captureMoves = [];
-  const simpleMoves = [];
-
-  for (let row = 0; row < 8; row += 1) {
-    for (let col = 0; col < 8; col += 1) {
-      if (getPieceColor(sourceBoard[row][col]) !== color) {
-        continue;
-      }
-
-      captureMoves.push(...getCaptureMovesForPiece(sourceBoard, row, col));
-      simpleMoves.push(...getSimpleMovesForPiece(sourceBoard, row, col));
-    }
-  }
-
-  return captureMoves.length > 0 ? captureMoves : simpleMoves;
 };
 
 /*
@@ -501,7 +309,31 @@ function App() {
 
     const result = await response.text();
     console.log("Response:", result);
-    return convertSolverMove(JSON.parse(result).move);
+    return convertApiMove(JSON.parse(result).move);
+  }, []);
+
+  const requestLegalMoves = useCallback(async (sourceBoard, side) => {
+    const response = await fetch(`${config.apiBaseUrl}/moves`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        board: serializeBoard(sourceBoard),
+        side,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const moves = await response.json();
+    if (!Array.isArray(moves)) {
+      throw new Error("Invalid moves response");
+    }
+
+    return moves.map(convertApiMove);
   }, []);
 
   /*
@@ -521,17 +353,28 @@ function App() {
         const isOwnPiece = getPieceColor(piece) === selectedColor;
 
         if (isOwnPiece) {
-          const legalMoves = getLegalMoves(board, selectedColor).filter(
-            (move) => move.start[0] === row && move.start[1] === col
-          );
-
           setSelectedSquare([row, col]);
-          setPossibleMoves(legalMoves);
-          setMessage(
-            legalMoves.length > 0
-              ? `${PLAYER_LABELS[selectedColor]} selected`
-              : `${PLAYER_LABELS[selectedColor]} has no move from ${coordsToNotation([row, col])}`
-          );
+          setPossibleMoves([]);
+          setIsLoading(true);
+
+          try {
+            const legalMoves = (await requestLegalMoves(board, selectedColor)).filter(
+              (move) => move.start[0] === row && move.start[1] === col
+            );
+
+            setPossibleMoves(legalMoves);
+            setMessage(
+              legalMoves.length > 0
+                ? `${PLAYER_LABELS[selectedColor]} selected`
+                : `${PLAYER_LABELS[selectedColor]} has no move from ${coordsToNotation([row, col])}`
+            );
+          } catch (error) {
+            console.error("Error requesting legal moves:", error);
+            setSelectedSquare(null);
+            setMessage(`Error: ${error.message}`);
+          } finally {
+            setIsLoading(false);
+          }
           return;
         }
 
@@ -597,6 +440,7 @@ function App() {
       isLoading,
       possibleMoves,
       requestBestMove,
+      requestLegalMoves,
       selectedColor,
       selectedType,
     ]

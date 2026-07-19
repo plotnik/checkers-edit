@@ -21,7 +21,7 @@ Interactive web app for creating a checkers board position and sending it to a s
 
 - Node.js 18+ (Node.js 20+ recommended)
 - npm
-- Running solver API that exposes `POST /solve`
+- Running solver API that exposes `POST /solve` and `POST /moves`
 
 ## Getting Started
 
@@ -103,6 +103,9 @@ The UI expects a response containing a move object similar to:
 ```
 
 The move is displayed in board notation such as `c3-d4` (or `c3:e5` for captures).
+
+In game mode, selecting a piece sends the same `board` and `side` fields (without
+`depth`) to `POST /moves`. The endpoint must return an array of legal move objects.
 
 ## Project Structure
 
