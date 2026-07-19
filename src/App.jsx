@@ -250,13 +250,12 @@ const convertApiMove = (move) => {
 };
 
 /*
- * The board highlights final destination squares. When the player clicks a
- * highlighted cell, this predicate connects that click back to the full move
- * object, including any intermediate captures in a multi-capture sequence.
+ * The board highlights the next landing square. Multi-captures keep the
+ * remaining sequence in possibleMoves so each jump can be played separately.
  */
-const moveEndsAt = (move, row, col) => {
-  const [endRow, endCol] = move.seq[move.seq.length - 1];
-  return endRow === row && endCol === col;
+const moveStartsWith = (move, row, col) => {
+  const [nextRow, nextCol] = move.seq[0];
+  return nextRow === row && nextCol === col;
 };
 
 function App() {
@@ -271,6 +270,7 @@ function App() {
   const [selectedType, setSelectedType] = useState("single"); // 'single' or 'king'
   const [selectedSquare, setSelectedSquare] = useState(null);
   const [possibleMoves, setPossibleMoves] = useState([]);
+  const [activeMove, setActiveMove] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -352,9 +352,10 @@ function App() {
         const piece = board[row][col];
         const isOwnPiece = getPieceColor(piece) === selectedColor;
 
-        if (isOwnPiece) {
+        if (isOwnPiece && !activeMove) {
           setSelectedSquare([row, col]);
           setPossibleMoves([]);
+          setActiveMove(null);
           setIsLoading(true);
 
           try {
@@ -371,6 +372,7 @@ function App() {
           } catch (error) {
             console.error("Error requesting legal moves:", error);
             setSelectedSquare(null);
+            setActiveMove(null);
             setMessage(`Error: ${error.message}`);
           } finally {
             setIsLoading(false);
@@ -378,25 +380,58 @@ function App() {
           return;
         }
 
-        const selectedMove = possibleMoves.find((move) => moveEndsAt(move, row, col));
-        if (!selectedMove) {
+        const matchingMoves = possibleMoves.filter((move) =>
+          moveStartsWith(move, row, col)
+        );
+        if (matchingMoves.length === 0 || !selectedSquare) {
+          return;
+        }
+
+        const selectedMove = matchingMoves[0];
+        const stepMove = {
+          start: selectedSquare,
+          seq: [[row, col]],
+          isCapture: selectedMove.isCapture,
+        };
+        const humanBoard = applyMoveToBoard(board, stepMove);
+        const humanMove = {
+          start: activeMove?.start ?? selectedMove.start,
+          seq: [...(activeMove?.seq ?? []), [row, col]],
+          isCapture: selectedMove.isCapture,
+        };
+        const remainingMoves = matchingMoves
+          .filter((move) => move.seq.length > 1)
+          .map((move) => ({
+            ...move,
+            start: [row, col],
+            seq: move.seq.slice(1),
+            ...(Array.isArray(move.captured) && {
+              captured: move.captured.slice(1),
+            }),
+          }));
+
+        setBoard(humanBoard);
+
+        if (remainingMoves.length > 0) {
+          setSelectedSquare([row, col]);
+          setPossibleMoves(remainingMoves);
+          setActiveMove(humanMove);
+          setMessage(`${PLAYER_LABELS[selectedColor]}: ${formatMove(humanMove)}`);
           return;
         }
 
         const opponentColor = opponentOf(selectedColor);
-        const humanBoard = applyMoveToBoard(board, selectedMove);
-
-        setBoard(humanBoard);
         setSelectedSquare(null);
         setPossibleMoves([]);
+        setActiveMove(null);
         setIsLoading(true);
-        setMessage(`${PLAYER_LABELS[selectedColor]}: ${formatMove(selectedMove)}`);
+        setMessage(`${PLAYER_LABELS[selectedColor]}: ${formatMove(humanMove)}`);
 
         try {
           const opponentMove = await requestBestMove(humanBoard, opponentColor);
           if (!opponentMove) {
             setMessage(
-              `${PLAYER_LABELS[selectedColor]}: ${formatMove(selectedMove)}. ${PLAYER_LABELS[opponentColor]} has no move.`
+              `${PLAYER_LABELS[selectedColor]}: ${formatMove(humanMove)}. ${PLAYER_LABELS[opponentColor]} has no move.`
             );
             return;
           }
@@ -404,7 +439,7 @@ function App() {
           const opponentBoard = applyMoveToBoard(humanBoard, opponentMove);
           setBoard(opponentBoard);
           setMessage(
-            `${PLAYER_LABELS[selectedColor]}: ${formatMove(selectedMove)}. ${PLAYER_LABELS[opponentColor]}: ${formatMove(opponentMove)}`
+            `${PLAYER_LABELS[selectedColor]}: ${formatMove(humanMove)}. ${PLAYER_LABELS[opponentColor]}: ${formatMove(opponentMove)}`
           );
         } catch (error) {
           console.error("Error sending position:", error);
@@ -433,15 +468,18 @@ function App() {
       });
       setSelectedSquare(null);
       setPossibleMoves([]);
+      setActiveMove(null);
     },
     [
       appMode,
+      activeMove,
       board,
       isLoading,
       possibleMoves,
       requestBestMove,
       requestLegalMoves,
       selectedColor,
+      selectedSquare,
       selectedType,
     ]
   );
@@ -455,6 +493,7 @@ function App() {
     setBoard(createInitialBoard());
     setSelectedSquare(null);
     setPossibleMoves([]);
+    setActiveMove(null);
     setMessage("");
   }, []);
 
@@ -478,6 +517,7 @@ function App() {
     setBoard(savedBoard);
     setSelectedSquare(null);
     setPossibleMoves([]);
+    setActiveMove(null);
     setMessage("Board restored.");
   }, []);
 
@@ -491,6 +531,7 @@ function App() {
     setMessage('');
     setSelectedSquare(null);
     setPossibleMoves([]);
+    setActiveMove(null);
 
     try {
       const move = await requestBestMove(board, selectedColor);
@@ -522,6 +563,7 @@ function App() {
     setAppMode(mode);
     setSelectedSquare(null);
     setPossibleMoves([]);
+    setActiveMove(null);
     setMessage("");
   }, []);
 
@@ -529,6 +571,7 @@ function App() {
     setSelectedColor(color);
     setSelectedSquare(null);
     setPossibleMoves([]);
+    setActiveMove(null);
   }, []);
 
   const displayedMessage = message || `${PLAYER_LABELS[selectedColor]} move`;

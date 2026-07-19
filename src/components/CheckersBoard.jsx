@@ -155,7 +155,7 @@ const CheckersBoard = ({
       : null;
     const moveTargets = new Set(
       possibleMoves.map((move) => {
-        const [row, col] = move.seq[move.seq.length - 1];
+        const [row, col] = move.seq[0];
         return `${row},${col}`;
       })
     );
